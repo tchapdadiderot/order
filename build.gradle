@@ -1,0 +1,167 @@
+buildscript {
+	dependencies {
+		classpath("org.openapitools:openapi-generator-gradle-plugin:7.1.0")
+	}
+}
+
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.2.4'
+	id 'io.spring.dependency-management' version '1.1.4'
+	id "org.openapi.generator" version "7.1.0"
+	id 'com.google.cloud.tools.jib' version '3.4.1'
+}
+
+group = 'com.jagaad.technical_test'
+version = '0.0.1-SNAPSHOT'
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+	cucumberRuntime {
+		extendsFrom testImplementation
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	set('mapstructVersion', "1.5.5.Final")
+	set('cucumberVersion', "7.12.1")
+	set('junitPlatformSuite', "1.9.0")
+	set('mockitoVersion', "5.3.1")
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.liquibase:liquibase-core'
+
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+//	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+	implementation 'com.h2database:h2'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
+	testImplementation 'org.mockito:mockito-inline:5.2.0'
+
+	// OPENAPI
+	implementation 'io.swagger:swagger-annotations:1.6.11'
+	implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+
+	// Lombok
+	compileOnly "org.projectlombok:lombok"
+	annotationProcessor "org.projectlombok:lombok"
+	testCompileOnly "org.projectlombok:lombok"
+	testAnnotationProcessor "org.projectlombok:lombok"
+
+	// Mapstruct
+	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+	testAnnotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+
+    testImplementation "org.mockito:mockito-core"
+	testImplementation 'org.assertj:assertj-core'
+
+	// Cucumber
+	testImplementation "org.junit.platform:junit-platform-suite:${junitPlatformSuite}"
+	testImplementation "org.junit.platform:junit-platform-suite-api:${junitPlatformSuite}"
+	testImplementation "io.cucumber:cucumber-core:${cucumberVersion}"
+	testImplementation "io.cucumber:cucumber-java:${cucumberVersion}"
+	testImplementation "io.cucumber:cucumber-java8:${cucumberVersion}"
+	testImplementation "io.cucumber:cucumber-junit-platform-engine:${cucumberVersion}"
+	testImplementation "io.cucumber:cucumber-spring:${cucumberVersion}"
+
+	implementation "org.javamoney:moneta:1.4.4"
+
+	// Mapstruct
+	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+	testAnnotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+}
+
+tasks.withType(JavaCompile).each {
+    it.options.compilerArgs.add('--enable-preview')
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+tasks.test {
+	useJUnitPlatform {
+		excludeTags 'e2e', 'data'
+	}
+	jvmArgs("--enable-preview")
+}
+
+tasks.register('dataTest', Test) {
+    ignoreFailures = true
+    dependsOn assemble, testClasses
+    useJUnitPlatform {
+        includeTags 'data'
+    }
+    jvmArgs("--enable-preview")
+}
+
+tasks.register('e2eTest', JavaExec) {
+	dependsOn assemble, testClasses
+	mainClass = "io.cucumber.core.cli.Main"
+	classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
+	jvmArgs = ["--enable-preview"]
+	args = [
+			'--plugin', 'html:build/cucumber-reports/html/index.html',
+			'--plugin', 'json:build/cucumber-reports/json/cucumber.json',
+			'--plugin', 'junit:build/cucumber-reports/json/cucumber.xml',
+			'--tags', 'not @Disabled',
+			'--glue', 'com.jagaad.technical_test.order.e2e', 'src/test/resources/com/jagaad/technical_test/order/e2e/features/'
+	]
+}
+
+openApiGenerate {
+	generatorName = "spring"
+	inputSpec = "$rootDir/openapi/api.yaml".toString()
+	outputDir = layout.buildDirectory.dir("generated/sources/openapi").get().asFile.path
+	apiPackage = "com.jagaad.technical_test.order.api"
+	modelPackage = "com.jagaad.technical_test.order.dto"
+	configOptions = [
+			dateLibrary         : "java8-localdatetime",
+			library             : "spring-boot",
+			interfaceOnly       : "true",
+			useTags             : "true",
+			skipDefaultInterface: "true",
+			useSpringBoot3      : "true",
+			openApiNullable     : "false"
+	]
+	typeMappings = [
+			time: "java.time.LocalTime",
+	]
+}
+
+compileJava.dependsOn(tasks.openApiGenerate)
+
+sourceSets.main.java.srcDir layout.buildDirectory.dir("generated/sources/openapi/src/main/java").get().asFile.path
+
+jib {
+	from {
+		image = "eclipse-temurin:21-jdk"
+	}
+	to {
+		image = "${project.name}"
+		tags = ["${project.version}"]
+	}
+	container {
+		creationTime = 'USE_CURRENT_TIMESTAMP'
+		jvmFlags = ['--enable-preview']
+	}
+}

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.6.xsd">
+    <changeSet id="order-1:1" author="lagoue.njinthe">
+        <createTable tableName="t_order">
+            <column autoIncrement="false" name="c_id" type="varchar(50)">
+                <constraints nullable="false" primaryKey="true"
+                             primaryKeyName="pk_order"/>
+            </column>
+            <column name="c_order_number" type="int8"/>
+            <column name="c_firstname" type="varchar(100)"/>
+            <column name="c_lastname" type="varchar(100)"/>
+            <column name="c_phone_country_code" type="varchar(10)"/>
+            <column name="c_phone_number" type="varchar(20)"/>
+            <column name="c_city" type="varchar(100)"/>
+            <column name="c_postal_code" type="varchar(10)"/>
+            <column name="c_street" type="varchar(100)"/>
+            <column name="c_created_at" type="datetime"/>
+            <column name="c_total" type="varchar(255)"/>
+            <column name="c_latitude" type="numeric"/>
+            <column name="c_longitude" type="numeric"/>
+            <column name="c_product" type="varchar(20)"/>
+            <column name="c_version" type="int8" defaultValueNumeric="0"/>
+        </createTable>
+        <addUniqueConstraint tableName="t_order" columnNames="c_order_number"/>
+        <addNotNullConstraint tableName="t_order" columnName="c_order_number"/>
+        <addNotNullConstraint tableName="t_order" columnName="c_firstname"/>
+        <addNotNullConstraint tableName="t_order" columnName="c_lastname"/>
+        <addNotNullConstraint tableName="t_order" columnName="c_phone_country_code"/>
+        <addNotNullConstraint tableName="t_order" columnName="c_phone_number"/>
+        <addNotNullConstraint tableName="t_order" columnName="c_total"/>
+        <addNotNullConstraint tableName="t_order" columnName="c_product"/>
+        <addNotNullConstraint tableName="t_order" columnName="c_created_at"/>
+        <addNotNullConstraint tableName="t_order" columnName="c_city"/>
+        <addNotNullConstraint tableName="t_order" columnName="c_street"/>
+        <addNotNullConstraint tableName="t_order" columnName="c_postal_code"/>
+
+        <createSequence
+                cacheSize="100"
+                cycle="true"
+                dataType="int8"
+                incrementBy="1"
+                maxValue="1000000000"
+                minValue="1"
+                ordered="true"
+                sequenceName="order_number_seq_id"
+                startValue="1"
+        />
+    </changeSet>
+    <changeSet id="order-3:1" author="lagoue.njinthe">
+        <createIndex clustered="true"
+                     indexName="idx_order_enhanced"
+                     tableName="t_order"
+                     tablespace="A String"
+                     unique="false">
+            <column descending="true" name="c_firstname"/>
+            <column descending="true" name="c_lastname"/>
+            <column descending="true" name="c_street"/>
+            <column descending="true" name="c_city"/>
+            <column descending="true" name="c_postal_code"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

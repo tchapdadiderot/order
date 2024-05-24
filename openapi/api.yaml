@@ -1,0 +1,199 @@
+openapi: "3.0.3"
+info:
+  title: Order
+  version: "1.0"
+servers:
+  - url: https://api.server.test/v1
+paths:
+  /public/order:
+    post:
+      tags:
+        - Order
+      summary: Place an order
+      description: Place an order
+      operationId: planAnOrder
+      requestBody:
+        description: User object that need to be create
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceAnOrderDTO'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDTO'
+  /public/order/{orderNumber}:
+    put:
+      tags:
+        - Order
+      summary: Update an existing order
+      description: Update an existing order
+      operationId: updateOrder
+      parameters:
+        - name: orderNumber
+          in: path
+          required: true
+          schema:
+            type: string
+          description: the order number that must be updated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAnOrderDTO'
+      responses:
+        204:
+          description: successful operation
+  /order:
+    get:
+      tags:
+        - Order
+      summary: Search Orders by customer data
+      description: Search Orders by customer data
+      operationId: searchOrdersByCustomerData
+      security:
+        - basicAuth: []
+      parameters:
+        - name: searchText
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/OrderDTO'
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+  schemas:
+    OrderDTO:
+      type: object
+      required:
+        - orderNumber
+        - firstname
+        - lastname
+        - phone
+        - deliveryAddress
+        - quantity
+        - total
+        - createdAt
+      properties:
+        orderNumber:
+          type: string
+        firstname:
+          type: string
+        lastname:
+          type: string
+        phone:
+          type: string
+        deliveryAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        quantity:
+          $ref: '#/components/schemas/PiloteQuantity'
+        total:
+          $ref: '#/components/schemas/MoneyDTO'
+        createdAt:
+          type: string
+          format: date-time
+    MoneyDTO:
+      type: object
+      properties:
+        value:
+          type: number
+          format: currency
+          description: The value of the represented money instance
+        currency:
+          type: string
+          description: The currency code (from ISO 4217) of the represented money instance
+    PlaceAnOrderDTO:
+      type: object
+      required:
+        - firstname
+        - lastname
+        - phoneNumber
+        - phoneCountryCode
+        - deliveryAddress
+        - quantity
+      properties:
+        firstname:
+          type: string
+        lastname:
+          type: string
+        phoneNumber:
+          type: string
+        phoneCountryCode:
+          type: string
+        deliveryAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        quantity:
+          $ref: '#/components/schemas/PiloteQuantity'
+    UpdateAnOrderDTO:
+      type: object
+      required:
+        - firstname
+        - lastname
+        - phoneNumber
+        - phoneCountryCode
+        - deliveryAddress
+        - quantity
+      properties:
+        firstname:
+          type: string
+        lastname:
+          type: string
+        phoneNumber:
+          type: string
+        phoneCountryCode:
+          type: string
+        deliveryAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        quantity:
+          $ref: '#/components/schemas/PiloteQuantity'
+    PiloteQuantity:
+      type: string
+      enum:
+        - FIVE
+        - TEN
+        - FIFTEEN
+    AddressDTO:
+      type: object
+      required:
+        - city
+        - postalCode
+        - street
+      properties:
+        city:
+          type: string
+        postalCode:
+          type: string
+        street:
+          type: string
+        gpsCoordinate:
+          $ref: '#/components/schemas/GPSCoordinateDTO'
+    GPSCoordinateDTO:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+
+
+

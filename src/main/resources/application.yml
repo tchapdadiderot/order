@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: order
+
+  threads:
+    virtual:
+      enabled: true
+
+  datasource:
+    url: jdbc:h2:mem:order;DATABASE_TO_UPPER=FALSE;IGNORECASE=TRUE;
+    name: order
+    generate-unique-name: false
+    driver-class-name: org.h2.Driver
+
+  h2:
+    console:
+      enabled: true
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
+      hibernate.globally_quoted_identifiers: true
+      globally_quoted_identifiers_skip_column_definitions: true
+
+  liquibase:
+    enabled: true
+    change-log: classpath:/com/jagaad/technical_test/order/changelog/master.xml
+    contexts: ${LIQUIBASE_CONTEXT}
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
